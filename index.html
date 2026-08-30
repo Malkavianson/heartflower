@@ -1,0 +1,241 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+      body {
+        background: black;
+        margin: 0;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+        margin: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" width="800" height="800"></canvas>
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      const angleMultiplier = 50;
+      const eraseStartPercent = 30;
+      const drawSpeed = 40;
+      const eraseSpeed = 40;
+      const timeToRestart = 0;
+      const baseScale = 10;
+      // const distFactor = 1 + i * 0.01;
+      const distFactor = 0.8;
+
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+
+      const colors = [
+        "rgb(255,0,0)",
+        "rgb(255,64,0)",
+        "rgb(255,128,0)",
+        "rgb(255,191,0)",
+        "rgb(255,255,0)",
+        "rgb(191,255,0)",
+        "rgb(128,255,0)",
+        "rgb(64,255,0)",
+        "rgb(0,255,0)",
+        "rgb(0,255,64)",
+        "rgb(0,255,128)",
+        "rgb(0,255,191)",
+        "rgb(0,255,255)",
+        "rgb(0,191,255)",
+        "rgb(0,128,255)",
+        "rgb(0,64,255)",
+        "rgb(0,0,255)",
+        "rgb(64,0,255)",
+        "rgb(128,0,255)",
+        "rgb(191,0,255)",
+        "rgb(255,0,255)",
+        "rgb(255,0,191)",
+        "rgb(255,0,128)",
+        "rgb(255,0,64)",
+        "rgb(255,80,80)",
+        "rgb(255,160,80)",
+        "rgb(255,220,80)",
+        "rgb(200,255,80)",
+        "rgb(120,255,80)",
+        "rgb(80,255,150)",
+        "rgb(80,255,220)",
+        "rgb(80,220,255)",
+        "rgb(80,150,255)",
+        "rgb(80,80,255)",
+        "rgb(150,80,255)",
+        "rgb(220,80,255)",
+        "rgb(255,80,220)",
+        "rgb(255,80,150)",
+        "rgb(220,0,0)",
+        "rgb(220,110,0)",
+        "rgb(220,220,0)",
+        "rgb(110,220,0)",
+        "rgb(0,220,0)",
+        "rgb(0,220,110)",
+        "rgb(0,220,220)",
+        "rgb(0,110,220)",
+        "rgb(0,0,220)",
+        "rgb(110,0,220)",
+        "rgb(220,0,220)",
+        "rgb(220,0,110)",
+        "rgb(255,105,180)",
+        "rgb(255,20,147)",
+        "rgb(0,250,154)",
+        "rgb(0,206,209)",
+        "rgb(30,144,255)",
+        "rgb(138,43,226)",
+        "rgb(255,140,0)",
+        "rgb(255,215,0)",
+        "rgb(173,255,47)",
+        "rgb(50,205,50)",
+        "rgb(0,255,127)",
+        "rgb(0,191,255)",
+        "rgb(148,0,211)",
+        "rgb(255,0,102)",
+      ];
+
+      function randomChoice(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      function drawFlower(i, erase = false) {
+        const angle = (i * (Math.PI * 2)) / angleMultiplier;
+        const x = 16 * Math.pow(Math.sin(angle), 3) * 15;
+        const y =
+          (13 * Math.cos(angle) -
+            5 * Math.cos(2 * angle) -
+            2 * Math.cos(3 * angle) -
+            Math.cos(4 * angle)) *
+          15;
+
+        const scale = baseScale * distFactor;
+
+        const px = cx + x * (scale / 15);
+        const py = cy - y * (scale / 15);
+
+        // MODO DE COMPOSIÇÃO: normal para desenhar, destination-out para apagar
+        ctx.globalCompositeOperation = erase
+          ? "destination-out"
+          : "source-over";
+
+        const hue = (i / angleMultiplier) * 360 + performance.now() * 0.025;
+        const strokeColor = erase
+          ? "rgba(0,0,0,1)"
+          : `hsla(${hue}, 100%, 65%, 0.9)`;
+
+        // if (!erase) {
+        //   ctx.shadowBlur = 14;
+        //   ctx.shadowColor = strokeColor;
+        // } else {
+        //   ctx.shadowBlur = 20;
+        //   ctx.shadowColor = "black";
+        // }
+
+        // const strokeColor = erase ? "rgba(0,0,0,1)" : randomChoice(colors);
+        // const lineColor = erase ? "rgba(0,0,0,1)" : "rgba(255,255,255,0.1)";
+        const lineColor = "rgba(0,0,0,1)";
+
+        // linha do centro até a flor
+        ctx.beginPath();
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = 1;
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(px, py);
+        ctx.stroke();
+
+        // florzinha
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 2;
+
+        let dirAngle =
+          (i * Math.floor(Math.random() * 360) * Math.PI) / angleMultiplier;
+        let cxx = px,
+          cyy = py;
+
+        for (let s = 0; s < 8; s++) {
+          const nx = cxx + Math.cos(dirAngle) * 6;
+          const ny = cyy + Math.sin(dirAngle) * 6;
+
+          ctx.beginPath();
+          ctx.moveTo(cxx, cyy);
+          ctx.lineTo(nx, ny);
+          ctx.stroke();
+
+          dirAngle += Math.PI / 3;
+        }
+
+        // resetar modo de composição pro padrão
+        // ctx.shadowBlur = 0;
+        // ctx.shadowColor = "transparent";
+
+        ctx.globalCompositeOperation = "source-over";
+      }
+
+      // async function drawAll() {
+      //   for (let i = 0; i < angleMultiplier; i++) {
+      //     drawFlower(i, false);
+      //     await new Promise((r) => setTimeout(r, 100));
+      //   }
+      // }
+
+      // async function eraseAll() {
+      //   for (let i = 0; i < 120; i++) {
+      //     drawFlower(i, true);
+      //     await new Promise(r => setTimeout(r, eraseSpeed));
+      //   }
+      // }
+
+      // async function eraseAll() {
+      //   for (let i = 0; i < 120; i++) {
+      //     drawFlower(i, true);
+      //   }
+      // }
+
+      // async function eraseAll() {
+      //   ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // }
+
+      async function eraseAll() {
+        for (let i = 0; i < angleMultiplier; i++) {
+          drawFlower(i, true);
+          await new Promise((r) => setTimeout(r, eraseSpeed));
+        }
+      }
+
+      async function loop() {
+        while (true) {
+          // dispara o eraseAll assim que o drawAll atingir eraseStartPercent%
+          const eraseTriggerIndex = Math.floor(
+            (angleMultiplier * eraseStartPercent) / 100,
+          );
+
+          let eraseStarted = false;
+          let erasePromise = null;
+
+          for (let i = 0; i < angleMultiplier; i++) {
+            drawFlower(i, false);
+
+            // quando atingir o % definido, dispara o erase em paralelo
+            if (!eraseStarted && i >= eraseTriggerIndex) {
+              eraseStarted = true;
+              erasePromise = eraseAll();
+            }
+
+            await new Promise((r) => setTimeout(r, drawSpeed));
+          }
+
+          // espera o erase terminar (caso ainda esteja rolando)
+          // if (erasePromise) await erasePromise;
+
+          await new Promise((r) => setTimeout(r, timeToRestart));
+        }
+      }
+
+      loop();
+    </script>
+  </body>
+</html>
